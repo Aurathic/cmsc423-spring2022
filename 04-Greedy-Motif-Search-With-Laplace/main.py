@@ -1,7 +1,7 @@
 from math import log 
-import random
-import pandas as pd
+from itertools import chain
 
+import random
 random.seed(0)
 
 dna_ind_map = {"A": 0, "C": 1, "G": 2, "T": 3}
@@ -18,18 +18,18 @@ def random_kmers(s,k):
 def first_kmers(s,k):
     return [seq[:k] for seq in s]
 
-def prob_profile(seqs, laplace_rule=True):
+def prob_profile(motifs, laplace_rule=True):
     """Input is a list of DNA sequences of length k.
     Output a k by 4 matrix of the proportions of each
     A, C, T and G at each position.
     If laplace_rule is True, then add one to each
     base before calculating frequency."""
-    t = len(seqs)
-    k = len(seqs[0]) # Assuming all are same length
+    t = len(motifs)
+    k = len(motifs[0]) # Assuming all are same length
     mat = []
     letters = ['A','C','G','T']
     for i in range(k):
-        ind_str = "".join([t[i] for t in seqs])
+        ind_str = "".join([t[i] for t in motifs])
         pr = []
         for c in letters:
             # This is probably not an efficient way to do it, but whatever
@@ -41,13 +41,16 @@ def prob_profile(seqs, laplace_rule=True):
         mat.append(pr)
     return mat
 
-def entropy(seqs):
+def entropy(motifs):
     """Input is the matrix from prob_profile.
     Return the sum of the entropy for each row of
     the matrix. 
     """
-    mat = prob_profile(seqs)
-    return sum(-sum(x*log(x,2) for x in row) for row in mat)
+    # Replace all 0s with 1s in order to avoid domain error on log calculation
+    mat = [1 if x==0 else x for x in chain(*prob_profile(motifs, laplace_rule=False))]
+    #print(mat)
+    #print(list(-sum(x*log(x,2) for x in row) for row in mat))
+    return -sum(x*log(x,2) for x in mat)
 
 def most_probable_kmer(seq, k, mat):
     """Given the probability profile matrix
@@ -73,28 +76,6 @@ def window(s, k):
         yield s[i:i+k]
 
 ## Driver code
-"""
-seqs = [
-"GTAAACAATATTTATAGC",
-"AAAATTTACCTCGCAAGG",
-"CCGTACTGTCAAGCGTGG",
-"TGAGTAAACGACGTCCCA",
-"TACTTAACACCCTGTCAA"
-]
-
-x = "TTATCCGACAGGCACGT"
-
-k = 5
-
-kmers = pick_random_kmers(seqs,5)
-print(kmers)
-ppm = prob_profile_matrix(kmers, False)
-print(ppm)
-ppml = prob_profile_matrix(kmers, True)
-print(ppml)
-print(matrix_entropy(ppml))
-print(most_probable_kmer(x, k, ppml))
-"""
 
 with open("./input","r") as fin, open("./output","w") as fout:
     k, t = [int(x) for x in fin.readline().split()]
@@ -107,24 +88,24 @@ with open("./input","r") as fin, open("./output","w") as fout:
             profile = prob_profile(new_motifs)
             new_motifs.append(most_probable_kmer(seqs[i], k, profile))
         new_entropy = entropy(new_motifs)
+        print(f"{new_motifs} ({new_entropy}) vs {best_entropy}")
         if new_entropy < best_entropy:
             best_motifs = new_motifs
             best_entropy = new_entropy
     fout.write("\n".join(best_motifs))
 
-# Comparing result to given answer
+def compare_results():
+    calculated = """ATT
+    AGT
+    ATT
+    ACT
+    ATT""".split()
 
-calculated = """ATT
-AGT
-ATT
-ACT
-ATT""".split()
+    given = """GAT
+    TAT
+    GAT
+    GAG
+    GAT""".split()
 
-given = """GAT
-TAT
-GAT
-GAG
-GAT""".split()
-
-print(entropy(given))
-print(entropy(calculated))
+    print(f"given {entropy(given)}")
+    print(f"calculated {entropy(calculated)}")
