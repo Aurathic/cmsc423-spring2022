@@ -1,5 +1,6 @@
 from math import log 
 from itertools import chain
+from collections import Counter
 
 import random
 random.seed(0)
@@ -18,6 +19,14 @@ def random_kmers(s,k):
 def first_kmers(s,k):
     return [seq[:k] for seq in s]
 
+def merged_cols(motifs):
+    """Given a sequence of kmers [m[0],...,m[n]],
+    return [m[0][0]+m[1][0]+...+m[n][0], 
+            m[0][1]+m[1][1]+...+m[n][1],
+            ...] """
+    for i in range(len(motifs[0])): # Assumes all are the same length
+        yield "".join([t[i] for t in motifs])
+
 def prob_profile(motifs, laplace_rule=True):
     """Input is a list of DNA sequences of length k.
     Output a k by 4 matrix of the proportions of each
@@ -28,8 +37,7 @@ def prob_profile(motifs, laplace_rule=True):
     k = len(motifs[0]) # Assuming all are same length
     mat = []
     letters = ['A','C','G','T']
-    for i in range(k):
-        ind_str = "".join([t[i] for t in motifs])
+    for ind_str in merged_cols(motifs):
         pr = []
         for c in letters:
             # This is probably not an efficient way to do it, but whatever
@@ -41,8 +49,18 @@ def prob_profile(motifs, laplace_rule=True):
         mat.append(pr)
     return mat
 
+def consensus_score(motifs):
+    """Returns the number of items which differ
+    from the consensus sequence of the motifs."""
+    t = len(motifs)
+    accum = 0
+    for ind_str in merged_cols(motifs):
+        most_common_freq = Counter(ind_str).most_common()[0][1]
+        accum += (t - most_common_freq)
+    return accum
+
 def entropy(motifs):
-    """Input is the matrix from prob_profile.
+    """Input is a list of k-mers.
     Return the sum of the entropy for each row of
     the matrix. 
     """
@@ -76,22 +94,21 @@ def window(s, k):
         yield s[i:i+k]
 
 ## Driver code
-
 with open("./input","r") as fin, open("./output","w") as fout:
     k, t = [int(x) for x in fin.readline().split()]
     seqs = fin.readlines()
     best_motifs = first_kmers(seqs, k)
-    best_entropy = entropy(best_motifs)
+    best_score = consensus_score(best_motifs)
     for s in window(seqs[0], k):
         new_motifs = [s]
         for i in range(1,t):
             profile = prob_profile(new_motifs)
             new_motifs.append(most_probable_kmer(seqs[i], k, profile))
-        new_entropy = entropy(new_motifs)
-        print(f"{new_motifs} ({new_entropy}) vs {best_entropy}")
-        if new_entropy < best_entropy:
+        new_score = consensus_score(new_motifs)
+        print(f"{new_motifs} ({new_score}) vs {best_score}")
+        if new_score < best_score:
             best_motifs = new_motifs
-            best_entropy = new_entropy
+            best_score = new_score
     fout.write("\n".join(best_motifs))
 
 def compare_results():
