@@ -182,3 +182,5 @@ def assessment_code():
     C
     T""".split()
     print(entropy(z))
+
+assessment_code()
