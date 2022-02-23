@@ -3,27 +3,42 @@
 # - label of edge leading into node from parent (can be either a string or coordinates within the string provided in the input)
 # - dictionary of children indexed by the first character on the edges leading into each child.
 class Node:
-    def __init__(self, parent=None, edge_to=None):
-        self.parent = parent
+    def __init__(self, edge_to=None, children=dict()):
         self.edge_to = edge_to
-        self.children = dict()
+        self.children = children
 
-    def add_child(self, edge):
+    def add_child_node(self, node):
+        print(f"{self.edge_to}.children[{node.edge_to[0]}] = {node.edge_to}")
+        self.children[node.edge_to[0]] = node
+        return node
+
+    def add_child_edge(self, edge):
         print(f"add child {edge} to {self.edge_to}")
-        self.children[edge[0]] = Node(self, edge)
+        return self.add_child_node(Node(edge))
+
+    def set_children(self, nodes):
+        self.children = dict()
+        for node in nodes:
+            self.add_child_node(node)
 
     def split(self, j, added_edge):
         parent_edge = self.edge_to[:j]
-        new_edge = self.edge_to[j:]
-        print(f"split {self.edge_to} into {parent_edge} with children {added_edge} and {new_edge}")
+        updated_edge = self.edge_to[j:]
+        print(f"split {self.edge_to} into {parent_edge} with children {added_edge} and {updated_edge}")
+        child_old = Node(updated_edge, self.children)
+        child_new = Node(added_edge)
+        self.set_children([child_old, child_new])
+        self.edge_to = parent_edge
+        """
         #create new node N that splits the edge at location of mismatch
-        new_parent = Node(self.parent, parent_edge)
+        new_parent = Node(parent_edge)
         #adjust link from parent and link to child accordingly
         self.parent = new_parent
-        self.edge_to = new_edge
+        self.edge_to = updated_edge
         #create new leaf node as child of N, and label corresponding edge with remainder of suffix
-        new_parent.add_child(added_edge)
+        new_parent.add_child_edge(added_edge)
         return new_parent
+        """
 
     def __str__(self):
         return f"({self.edge_to}::[{', '.join([e + ': ' + str(v) for (e,v) in self.children.items()])}])"
@@ -84,7 +99,7 @@ def suffix_tree(text):
         else:            
             #create new leaf node as child of current node
             #label the edge towards the leaf with s.
-            curr.add_child(suffix)        
+            curr.add_child_edge(suffix)        
         print(f"{suffix} => {root}")
     return root 
 
