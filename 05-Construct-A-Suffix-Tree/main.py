@@ -1,52 +1,53 @@
+from itertools import chain
+
+debug = False
+
 #Construct a class that represents a suffix tree
 #One possible solution creates a class for a node, which contains the following information:
 # - label of edge leading into node from parent (can be either a string or coordinates within the string provided in the input)
 # - dictionary of children indexed by the first character on the edges leading into each child.
 class Node:
-    def __init__(self, edge_to=None, children=dict()):
+    def __init__(self, parent=None, edge_to=None):
+        self.parent = parent
         self.edge_to = edge_to
-        self.children = children
-
-    def add_child_node(self, node):
-        print(f"{self.edge_to}.children[{node.edge_to[0]}] = {node.edge_to}")
-        self.children[node.edge_to[0]] = node
-        return node
+        self.children = dict()
 
     def add_child_edge(self, edge):
-        print(f"add child {edge} to {self.edge_to}")
-        return self.add_child_node(Node(edge))
+        if debug:
+            print(f"add child {edge} to {self.edge_to}")
+        self.children[edge[0]] = Node(self, edge)
 
-    def set_children(self, nodes):
-        self.children = dict()
-        for node in nodes:
-            self.add_child_node(node)
+    def add_child_node(self, node):
+        self.children[node.edge_to[0]] = node
+
+    def remove_child(self, edge):
+        del self.children[edge[0]]
 
     def split(self, j, added_edge):
         parent_edge = self.edge_to[:j]
-        updated_edge = self.edge_to[j:]
-        print(f"split {self.edge_to} into {parent_edge} with children {added_edge} and {updated_edge}")
-        child_old = Node(updated_edge, self.children)
-        child_new = Node(added_edge)
-        self.set_children([child_old, child_new])
-        self.edge_to = parent_edge
-        """
+        new_edge = self.edge_to[j:]
+        if debug:
+            print(f"split {self.edge_to} into {parent_edge} with children {added_edge} and {new_edge}")
         #create new node N that splits the edge at location of mismatch
-        new_parent = Node(parent_edge)
+        new_parent = Node(self.parent, parent_edge)
         #adjust link from parent and link to child accordingly
+        self.parent.remove_child(self.edge_to)
+        self.parent.add_child_node(new_parent)
         self.parent = new_parent
-        self.edge_to = updated_edge
+        self.edge_to = new_edge
+        new_parent.add_child_node(self)
         #create new leaf node as child of N, and label corresponding edge with remainder of suffix
         new_parent.add_child_edge(added_edge)
         return new_parent
-        """
 
     def __str__(self):
-        return f"({self.edge_to}::[{', '.join([e + ': ' + str(v) for (e,v) in self.children.items()])}])"
+        return f"{self.edge_to}::[{', '.join([str(v) for v in self.children.values()])}]"
+        #return f"({self.edge_to}::[{', '.join([e + ': ' + str(v) for (e,v) in self.children.items()])}])"
 
 
-    #Start by creating the root - an empty node
-    #Process the string suffix by suffix, starting from root
-    #For each suffix s
+#Start by creating the root - an empty node
+#Process the string suffix by suffix, starting from root
+#For each suffix s
     #set current node to be the root
     #if current node has a child starting with the first character in s
         #check character by character if suffix matches the label of edge
@@ -70,8 +71,10 @@ def suffix_tree(text):
     #Process the string suffix by suffix, starting from root
     #For each suffix s
     for s in range(n):
-        #set current node to be the root
         suffix = text[s:n]
+        if debug:
+            print(f"suffix: {suffix}")
+        #set current node to be the root
         curr = root
         #if current node has a child starting with the first character in s
         if suffix[0] in curr.children:
@@ -80,15 +83,22 @@ def suffix_tree(text):
             j = None
             continue_loop = True
             while i < n and continue_loop:
-                #if child reached before suffix is exhausted
-                #continue with child as current node, and s as remaining portion of suffix
                 j = 0
+                if debug: 
+                    print(f"i: {i}, curr: {curr}")
+                #if child reached before suffix is exhausted
+                if suffix[i] not in curr.children:
+                    #continue with child as current node, and s as remaining portion of suffix
+                    # TODO I have no idea if this works
+                    curr.add_child_edge(suffix[i:])
+                    break
                 curr = curr.children[suffix[i]]
                 while j < len(curr.edge_to):
                     #if mismatch found inside the edge
                     if suffix[i] != curr.edge_to[j]:        
                         #split node into two subnodes 
-                        curr = curr.split(j, suffix[i:])
+                        curr.split(j, suffix[i:])
+                        # curr = curr.split(j, suffix[i:])
                         continue_loop = False
                         break
                     i += 1
@@ -104,14 +114,33 @@ def suffix_tree(text):
     return root 
 
 def edges_of_suffix_tree(text):
-    pass
+    return edges_of_suffix_tree_aux(suffix_tree(text))[1:]
+
+def edges_of_suffix_tree_aux(root):
+    return [root.edge_to] + \
+        list(chain(*[edges_of_suffix_tree_aux(child) for child in root.children.values()]))
 
 ## Driver code
-"""
-with open("./input","r") as fin, open("./output","w") as fout:
-   text = fin.readline() 
-   edges = edges_of_suffix_tree(text)
-   fout.write("\n".join(edges))
-"""
+def main():
+    with open("./input","r") as fin, open("./output","w") as fout:
+        text = fin.readline() 
+        edges = edges_of_suffix_tree(text)
+        fout.write("\n".join(edges))
 
-print(suffix_tree("ABABC$"))
+
+def test(test):
+    print(suffix_tree(test))
+    print("------")
+    print(edges_of_suffix_tree(test))
+    #print(suffix_tree("AA$"))
+
+main()
+
+
+test1 = "ACACCAACA$"
+test2 = "AA$"
+#test(test1)
+
+"""
+None::[C::[CAACA$::[], A::[CCAACA$::[], ACA$::[]]], A::[C::[CAACA$::[], A::[CCAACA$::[], $::[]]], ACA$::[]]]
+"""
