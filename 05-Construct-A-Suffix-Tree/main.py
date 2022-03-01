@@ -71,7 +71,7 @@ def suffix_tree(text):
     #Process the string suffix by suffix, starting from root
     #For each suffix s
     for s in range(n):
-        suffix = text[s:n]
+        suffix = text[s:]
         if debug:
             print(f"suffix: {suffix}")
         #set current node to be the root
@@ -89,7 +89,6 @@ def suffix_tree(text):
                 #if child reached before suffix is exhausted
                 if suffix[i] not in curr.children:
                     #continue with child as current node, and s as remaining portion of suffix
-                    # TODO I have no idea if this works
                     curr.add_child_edge(suffix[i:])
                     break
                 curr = curr.children[suffix[i]]
@@ -114,17 +113,25 @@ def suffix_tree(text):
     return root 
 
 def edges_of_suffix_tree(text):
-    return edges_of_suffix_tree_aux(suffix_tree(text))[1:]
+    return edges_of_suffix_tree_aux(suffix_tree(text))[1:]   
 
 def edges_of_suffix_tree_aux(root):
     return [root.edge_to] + \
         list(chain(*[edges_of_suffix_tree_aux(child) for child in root.children.values()]))
 
+display_stuff = False
+
 ## Driver code
 def main():
     with open("./input","r") as fin, open("./output","w") as fout:
-        text = fin.readline() 
+        text = fin.read().replace("\n","")
         edges = edges_of_suffix_tree(text)
+        print("---")    
+        if display_stuff:
+            print(text)
+            print("---")
+            print(edges)
+            0/0 # Here so the code crashes and displays stdout
         fout.write("\n".join(edges))
 
 
@@ -132,10 +139,8 @@ def test(test):
     print(suffix_tree(test))
     print("------")
     print(edges_of_suffix_tree(test))
-    #print(suffix_tree("AA$"))
 
 main()
-
 
 test1 = "ACACCAACA$"
 test2 = "AA$"
