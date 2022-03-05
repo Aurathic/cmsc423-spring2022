@@ -7,7 +7,7 @@ def reverse_bwt(bwt):
 
     order_map = dict()
     order_map['$'] = []
-    #print(bwt)
+    print(bwt)
 
     bwt_copy = list(bwt)
     """
@@ -27,7 +27,7 @@ def reverse_bwt(bwt):
             order_map[c] = [i]
         bwt_copy[i] = '$' # TODO Really inefficient
 
-    #print(order_map)
+    print(order_map)
     first_col_indexes = list(chain(*order_map.values()))
     #print(list(zip(enumerate(first_col_indexes),list(bwt))))
 
@@ -41,12 +41,15 @@ def reverse_bwt(bwt):
 
 def main():
     with open("./input","r") as fin, open("./output","w") as fout:
-        text = fin.readline()
+        text = fin.read().replace("\n","").strip()
+        print(text)
         sout = reverse_bwt(text)
+        print(sout)
         fout.write(sout)
 
-    main()
+main()
 
 text1 = "annb$aa"
 text2 = "TTCCTAACG$A"
-print(reverse_bwt(text2))
+text3 = "AC$"
+#print(reverse_bwt(text3))
