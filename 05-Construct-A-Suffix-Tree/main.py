@@ -140,11 +140,12 @@ def test(test):
     print("------")
     print(edges_of_suffix_tree(test))
 
-main()
+#main()
 
+test0 = "BBABABBA$"
 test1 = "ACACCAACA$"
 test2 = "AA$"
-#test(test1)
+test(test0)
 
 """
 None::[C::[CAACA$::[], A::[CCAACA$::[], ACA$::[]]], A::[C::[CAACA$::[], A::[CCAACA$::[], $::[]]], ACA$::[]]]

@@ -49,7 +49,8 @@ def main():
 
 main()
 
+text0 = "ACTGCAG$TA"
 text1 = "annb$aa"
 text2 = "TTCCTAACG$A"
 text3 = "AC$"
-#print(reverse_bwt(text3))
+print(reverse_bwt(text0))
