@@ -24,12 +24,16 @@ def highest_score_alignment(s1, s2):
     highest_score = 0
 
     mat = [[0 for j in range(n+1)] for i in range(m+1)] # used for dynamic programming
-    edge_list = dict() # Store the value from which the current cell value was derived
+    edge_list = dict()  # Store the value from which the current cell value was derived
+                        # this really should be a 2d array, but whatever, this works
 
+    # Set initial values of row and column 0
     # Set edges for row and column 0
     for i in range(1,m+1):
+        mat[i][0] = i*gap_penalty
         edge_list[(i,0)] = (i-1,0)
     for j in range(1,n+1):
+        mat[0][j] = j*gap_penalty
         edge_list[(0,j)] = (0,j-1)
 
     # Filling in matrix, getting highest score
