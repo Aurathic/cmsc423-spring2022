@@ -31,14 +31,14 @@ def highest_score_alignment(s1, s2):
     # Set initial values of row and column 0
     # Set edges for row and column 0
     for i in range(1,m+1):
-        mat[i][0] = i*gap_penalty
-        edge_list[(i,0)] = (i-1,0)
+        #mat[i][0] = i*gap_penalty
+        edge_list[(i,0)] = (0,0)
     for j in range(1,n+1):
-        mat[0][j] = j*gap_penalty
-        edge_list[(0,j)] = (0,j-1)
+        #mat[0][j] = j*gap_penalty
+        edge_list[(0,j)] = (0,0)
 
     curr_ind = (m,n)
-    max_score = 0
+    highest_score = 0
 
     # Filling in matrix, getting highest score
     for i in range(1,m+1):
@@ -47,22 +47,21 @@ def highest_score_alignment(s1, s2):
             mat[i][j] = score
             #print(f"mat[{i}][{j}] = {score}")
             edge_list[(i,j)] = prev_ind
-            if score > max_score:
-                max_score = score
+            if score > highest_score:
+                highest_score = score
                 curr_ind = (i,j)
 
     # Print matrix
     [print("\t".join(str(x) for x in l)) for l in mat]
 
-    highest_score = mat[m][n]
-
     # Backtrack using edge_list to find change strings
     align1, align2 = "", ""
-    curr_ind = (m,n)
     while curr_ind != (0,0):
         (i,j) = curr_ind
         #print(curr_ind)
         curr_ind = edge_list[curr_ind]
+        #if curr_ind == (0,0):
+        #    pass
         if curr_ind == (i-1, j-1):
             # substitution / matching
             align1, align2 = s1[i-1] + align1, s2[j-1] + align2
