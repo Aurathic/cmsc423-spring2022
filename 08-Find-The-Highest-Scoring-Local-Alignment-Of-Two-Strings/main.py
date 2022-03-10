@@ -60,9 +60,9 @@ def highest_score_alignment(s1, s2):
         (i,j) = curr_ind
         #print(curr_ind)
         curr_ind = edge_list[curr_ind]
-        #if curr_ind == (0,0):
-        #    pass
-        if curr_ind == (i-1, j-1):
+        if mat[i][j] == 0:
+            break
+        elif curr_ind == (i-1, j-1):
             # substitution / matching
             align1, align2 = s1[i-1] + align1, s2[j-1] + align2
         elif curr_ind == (i, j-1):
@@ -71,8 +71,8 @@ def highest_score_alignment(s1, s2):
         elif curr_ind == (i-1, j):
             # deletion from s2
             align1, align2 = s1[i-1] + align1, "-" + align2
-        elif curr_ind == (0,0):
-            pass # TODO? 
+        #elif curr_ind == (0,0):
+        #    pass
         else:
             raise Exception(f"There's an issue with the edge list: {(i,j)} -> {curr_ind}")
 
