@@ -1,15 +1,15 @@
 from itertools import combinations, chain
 from collections import Counter
 
-debug = False
+debug = True
 all_amino_acids = set([57, 71, 87, 97, 99, 101, 103, 113, 114, 115, 128, 129, 131, 137, 147, 156, 163, 186])
 
 def linear_spectrum(peptide):
-    masses = [sum(peptide[x:y]) for x, y in combinations(range(len(peptide)), r=2)] + [sum(peptide)]
+    masses = [sum(peptide[x:y]) for x, y in combinations(range(len(peptide)), r=2)] + [sum(peptide), 0]
     return Counter(masses)
 
 def theoretical_spectrum(peptide):
-    masses = [[sum(peptide[x:y]), sum(peptide[y:]+peptide[:x])] for x, y in combinations(range(len(peptide)), r=2)] + [[sum(peptide)]]
+    masses = [[sum(peptide[x:y]), sum(peptide[y:]+peptide[:x])] for x, y in combinations(range(len(peptide)), r=2)] + [[sum(peptide), 0]]
     return Counter(chain(*masses))
 
 def possible_amino_acids(spectrum):
@@ -72,10 +72,10 @@ def cyclopeptide_sequences(spectrum):
 def main():
     with open("./input","r") as fin, open("./output","w") as fout:
         spectrum = [int(x) for x in fin.readline().split()]
-        seq = cyclopeptide_sequences(Counter(spectrum))
-        print(seq)
-        fout.write(" ".join("-".join(seq)))
+        seqs = cyclopeptide_sequences(Counter(spectrum))
+        print(seqs)
+        fout.write(" ".join(["-".join([str(mass) for mass in s]) for s in seqs]))
 
 #print(theoretical_spectrum([137, 103, 147, 113]))
 #print(cyclopeptide_sequences(Counter([103, 113, 137, 147, 240, 250, 250, 260, 353, 363, 387, 397, 500])))
-#main()
+main()
