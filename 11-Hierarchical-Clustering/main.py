@@ -1,36 +1,44 @@
 from math import sqrt
-debug = True
+from copy import deepcopy
 
-def average_distance(D, cluster1, cluster2):
+D_orig = None
+
+def average_distance(cluster1, cluster2):
     """Given two clusters (lists of indices into row/columns of D), 
         calculate the average distance between the items in the cluster"""
-    return sum(D[i1][i2] for i1 in cluster1 for i2 in cluster2)/(len(cluster1)*len(cluster2))
+    return sum(D_orig[i1-1][i2-1] for i1 in cluster1 for i2 in cluster2)/(len(cluster1)*len(cluster2))
 
 def closest_clusters_indices(D, clusters):
     """Returns indices i & j into `clusters` which have lowest average distance, i < j"""
     i_out, j_out = (0, 0)
     min_dist = float("inf")
     for i in range(len(clusters)):
-        for j in range(i,len(clusters)):
-            dist = average_distance(D, clusters[i], clusters[j])
-            if dist < min_dist:
-                min_dist = dist 
+        for j in range(i+1,len(clusters)):
+            if D[i][j] < min_dist:
+                min_dist = D[i][j] 
                 i_out, j_out = (i,j)
     return (i_out, j_out)
 
-def remove_cluster(D, i):
+def remove_cluster_index(D, clusters, i):
+    # remove row/column header
+    clusters.pop(i)
     # remove row
-    D[i] = [float("inf")] * len(D[i])
+    D.pop(i)
+    #D[i] = [float("inf")] * len(D[i])
     # remove column 
     for j in range(len(D)):
-        D[j][i] = float("inf")
+        D[j].pop(i)
+        #D[j][i] = float("inf")
 
-def remove_clusters(D, ind_list):
-    for i in ind_list:
-        remove_cluster(D, i)
-
-def add_cluster(D, cluster):
-    pass
+def add_cluster(D, clusters, new_cluster):
+    new_cluster_distance = [average_distance(c, new_cluster) for c in clusters]
+    # add column
+    for j in range(len(clusters)):
+        D[j].append(new_cluster_distance[j])
+    # add row
+    D.append(new_cluster_distance + [0.0])
+    # add row/column header
+    clusters.append(new_cluster)
 
 def hierarchical_clustering(D, n):
     """HierarchicalClustering(D, n)
@@ -47,28 +55,31 @@ def hierarchical_clustering(D, n):
         add Cnew to Clusters 
     assign root in T as a node with no incoming edges
     return T"""
-    clusters = [[i] for i in range(n)] # labels for the row/columns of distance matrix
-    output = []
+    clusters = [[i] for i in range(1,n+1)] # labels for the row/columns of distance matrix
+    output = [] # each of the created clusters in order of their creation
     while len(clusters) > 1: 
-        i, j = closest_clusters_indices(clusters)
-
+        #print('\n'.join(' '.join('%2.2f' % x for x in row) for row in D))
+        i, j = closest_clusters_indices(D, clusters)
         # merge ith and jth clusters
-        c_new = clusters[i] + clusters[j]
-        output.append(c_new)
-        clusters.append(c_new)
-
-        # remove merged clusters
-        # TODO
-
+        new_cluster = clusters[i] + clusters[j]
+        #print(new_cluster)
+        output.append(new_cluster)
+        # update the distances and clusters (row/col labels) arrays  
+        add_cluster(D, clusters, new_cluster)
+        remove_cluster_index(D, clusters, j)
+        remove_cluster_index(D, clusters, i)
+        #print(clusters)
+        #print("---")
     return output
 
 # Driver Code
 def main():
     with open("./input","r") as fin, open("./output","w") as fout:
-        n = int(fin.readline().split())
-        dist_mat = [tuple(map(float, l.split())) for l in fin.readlines()]
-        out = hierarchical_clustering(dist_mat, n)
-        print(out)
+        n = int(fin.readline())
+        global D_orig 
+        D_orig = [list(map(float, l.split())) for l in fin.readlines()]
+        out = hierarchical_clustering(deepcopy(D_orig), n)
+        #print(out)
         for p in out:
             fout.write(" ".join(map(str, p)) + "\n")
 
